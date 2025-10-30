@@ -139,10 +139,17 @@ def plot(df):
 
 
 def main():
+    
     st.set_page_config(page_title="Dashboard", layout="wide")
+
+    st.header("Lastmanagement Wasserstoff")
     df = daten()
     plot(df)
 
 
+    st.header("Lastmanagement Leistung")
+    st.info("kommt noch")
+    st.header("Lastmanagement Wasser")
+    st.info("kommt noch")
 if __name__ == "__main__":
     main()
