@@ -13,8 +13,8 @@ def daten():
     df = pd.read_excel("Lastmanagement.xlsx")
     return df
 
-def plot(df):
-    # --- Relevante Spalten auswählen ---
+def plot_Wasserstoff(df):
+    
     df_clean = df[[
         "Tag",
         "Uhrzeit",
@@ -35,7 +35,7 @@ def plot(df):
     # --- Zeitstempel aus Tag + Startzeit erstellen ---
     df_clean["Zeitstempel"] = pd.to_datetime(
         df_clean["Tag"].astype(str) + " " + df_clean["Startzeit"],
-        dayfirst=True,  # wichtig für dd.mm.yyyy
+        dayfirst=True,  
         errors="coerce"
     )
 
@@ -59,7 +59,7 @@ def plot(df):
     # --- Plot erstellen ---
     fig = go.Figure()
 
-    # 1️⃣ Balken: Speicherveränderung
+    # Balken: Speicherveränderung
     fig.add_trace(go.Bar(
         x=df_clean["Zeitstempel"],
         y=df_clean["Speicherveränderung [kg]"],
@@ -75,7 +75,7 @@ def plot(df):
         customdata=df_clean[["SOC [%]", "Zeit für Elektrolyseur"]]
     ))
 
-    # 2️⃣ Linie: SOC (rechte Achse)
+    # Linie: SOC (rechte Achse)
     fig.add_trace(go.Scatter(
         x=df_clean["Zeitstempel"],
         y=df_clean["SOC [%]"],
@@ -86,7 +86,7 @@ def plot(df):
         hovertemplate="Zeit: %{x|%d.%m %H:%M}<br>SOC: %{y:.3f}"
     ))
 
-    # 3️⃣ Band: Lade/Nichtlade-Zeiten
+    # Band: Lade/Nichtlade-Zeiten
     band_height = max(abs(df_clean["Speicherveränderung [kg]"])) * 0.1
     fig.add_trace(go.Bar(
         x=df_clean["Zeitstempel"],
@@ -121,7 +121,7 @@ def plot(df):
         barmode="overlay",
         bargap=0.15,
         height=650,
-        legend=dict(x=0.01, y=0.99),
+        #legend=dict(x=0.01, y=0.99),
         margin=dict(t=80, b=100),
         xaxis=dict(
             tickformat="%d.%m %H:%M",  # zeigt Datum + Zeit
@@ -135,7 +135,73 @@ def plot(df):
     fig.update_yaxes(range=[ymin - abs(ymin) * 0.4, ymax * 1.2])
 
     st.plotly_chart(fig, use_container_width=True)
+def plot_wasser(df):
+    # --- Relevante Spalten auswählen ---
+    df_clean = df[["Tag", "Uhrzeit", "Wasserbedarf [Liter]"]].copy()
 
+    # --- Startzeit aus Uhrzeit-Intervall extrahieren ---
+    df_clean["Startzeit"] = df_clean["Uhrzeit"].str.split("–").str[0]
+
+    # --- Zeitstempel aus Tag + Startzeit erstellen ---
+    df_clean["Zeitstempel"] = pd.to_datetime(
+        df_clean["Tag"].astype(str) + " " + df_clean["Startzeit"],
+        dayfirst=True,
+        errors="coerce"
+    )
+
+    # --- Tagesweise kumulierten Wasserverbrauch berechnen ---
+    df_clean["Tag"] = pd.to_datetime(df_clean["Tag"], dayfirst=True)
+    df_clean["Wasser kumuliert Tagesweise [Liter]"] = df_clean.groupby("Tag")["Wasserbedarf [Liter]"].cumsum()
+
+    # --- Plot erstellen ---
+    fig = go.Figure()
+
+    # Balken: Wasserverbrauch pro Intervall (linke Achse)
+    fig.add_trace(go.Bar(
+        x=df_clean["Zeitstempel"],
+        y=df_clean["Wasserbedarf [Liter]"],
+        name="Wasserbedarf [Liter] pro Intervall",
+        marker_color="rgba(0,123,255,0.5)",
+        opacity=0.7,
+        hovertemplate="Zeit: %{x|%d.%m %H:%M}<br>Wasserbedarf: %{y} Liter"
+    ))
+
+    # Linie: kumulierter Wasserverbrauch pro Tag (rechte Achse)
+    fig.add_trace(go.Scatter(
+        x=df_clean["Zeitstempel"],
+        y=df_clean["Wasser kumuliert Tagesweise [Liter]"],
+        mode="lines+markers",
+        name="Kumulierter Tagesverbrauch [Liter]",
+        line=dict(color="darkblue", width=3),
+        yaxis="y2",
+        hovertemplate="Zeit: %{x|%d.%m %H:%M}<br>Kumuliert heute: %{y} Liter"
+    ))
+
+    # --- Layout ---
+    fig.update_layout(
+        title="Wasserverbrauch pro Intervall und kumuliert pro Tag",
+        xaxis_title="Datum & Uhrzeit",
+        yaxis=dict(
+            title="Wasserbedarf [Liter] pro Intervall",
+            showgrid=False
+        ),
+        yaxis2=dict(
+            title="Kumulierter Tagesverbrauch [Liter]",
+            overlaying="y",
+            side="right",
+            showgrid=False
+        ),
+        template="plotly_white",
+        height=550,
+        margin=dict(t=80, b=100),
+        barmode="overlay",
+        xaxis=dict(
+            tickformat="%d.%m %H:%M",
+            tickangle=45
+        )
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def main():
@@ -144,12 +210,13 @@ def main():
 
     st.header("Lastmanagement Wasserstoff")
     df = daten()
-    plot(df)
+    plot_Wasserstoff(df)
 
 
     st.header("Lastmanagement Leistung")
     st.info("kommt noch")
     st.header("Lastmanagement Wasser")
-    st.info("kommt noch")
+    plot_wasser(df)
+    
 if __name__ == "__main__":
     main()
