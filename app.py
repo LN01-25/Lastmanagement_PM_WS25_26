@@ -117,6 +117,7 @@ def plot_Wasserstoff(df):
         xaxis=dict(
             tickformat="%d.%m %H:%M",
             tickangle=45,
+            dtick=10800000,
             fixedrange=True
         ),
         legend=dict(
@@ -167,7 +168,7 @@ def plot_wasser(df):
         height=550,
         margin=dict(t=80, b=100),
         barmode="overlay",
-        xaxis=dict(tickformat="%d.%m %H:%M", tickangle=45),
+        xaxis=dict(tickformat="%d.%m %H:%M",dtick=10800000, tickangle=45),
         legend=dict(
             x=0.5, y=1.1, orientation="h", xanchor="center", yanchor="bottom"
         )
@@ -210,7 +211,7 @@ def plot_leistung(df):
         height=600,
         margin=dict(t=80, b=100),
         barmode="stack",
-        xaxis=dict(tickformat="%d.%m %H:%M", tickangle=45),
+        xaxis=dict(tickformat="%d.%m %H:%M",dtick=10800000, tickangle=45),
         legend=dict(
             x=0.5, y=1.1, orientation="h", xanchor="center", yanchor="bottom"
         )
